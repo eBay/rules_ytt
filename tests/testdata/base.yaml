@@ -1,0 +1,4 @@
+#@ load("@ytt:data", "data")
+---
+name: #@ data.values.name
+image_digest: #@ "my-repo/my-image@{}".format(data.values.image_digest)

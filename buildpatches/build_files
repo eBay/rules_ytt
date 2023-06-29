@@ -1,0 +1,1906 @@
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ cmd/ytt/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,19 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
++
++go_library(
++    name = "ytt_lib",
++    srcs = ["ytt.go"],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/cmd/ytt",
++    visibility = ["//visibility:private"],
++    deps = [
++        "//pkg/cmd",
++        "//vendor/github.com/cppforlife/go-cli-ui/errors",
++    ],
++)
++
++go_binary(
++    name = "ytt",
++    embed = [":ytt_lib"],
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ cmd/ytt-lambda-website/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,24 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
++
++go_library(
++    name = "ytt-lambda-website_lib",
++    srcs = [
++        "main.go",
++        "request.go",
++        "response.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/cmd/ytt-lambda-website",
++    visibility = ["//visibility:private"],
++    deps = [
++        "//pkg/cmd",
++        "//vendor/github.com/aws/aws-lambda-go/events",
++        "//vendor/github.com/aws/aws-lambda-go/lambda",
++    ],
++)
++
++go_binary(
++    name = "ytt-lambda-website",
++    embed = [":ytt-lambda-website_lib"],
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ examples/integrating-with-ytt/internal-templating/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,26 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
++
++go_library(
++    name = "internal-templating_lib",
++    srcs = ["main.go"],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/examples/integrating-with-ytt/internal-templating",
++    visibility = ["//visibility:private"],
++    deps = [
++        "//pkg/cmd/template",
++        "//pkg/cmd/ui",
++        "//pkg/files",
++    ],
++)
++
++go_binary(
++    name = "internal-templating",
++    embed = [":internal-templating_lib"],
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "internal-templating_test",
++    srcs = ["main_test.go"],
++    embed = [":internal-templating_lib"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/cmd/template/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,62 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "template",
++    srcs = [
++        "bulk_input.go",
++        "cmd.go",
++        "cmd_flags.go",
++        "data_values_file.go",
++        "data_values_flags.go",
++        "doc.go",
++        "file_marks.go",
++        "regular_input.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/template",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/cmd/ui",
++        "//pkg/filepos",
++        "//pkg/files",
++        "//pkg/schema",
++        "//pkg/template",
++        "//pkg/workspace",
++        "//pkg/workspace/datavalues",
++        "//pkg/workspace/ref",
++        "//pkg/yamlmeta",
++        "//pkg/yttlibrary/overlay",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":template",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "template_test",
++    srcs = [
++        "cmd_data_values_file_test.go",
++        "cmd_data_values_test.go",
++        "cmd_library_module_test.go",
++        "cmd_overlays_test.go",
++        "cmd_root_library_test.go",
++        "cmd_test.go",
++        "regular_input_test.go",
++        "schema_author_test.go",
++        "schema_consumer_test.go",
++        "schema_inspect_test.go",
++    ],
++    deps = [
++        ":template",
++        "//pkg/cmd/ui",
++        "//pkg/experiments",
++        "//pkg/files",
++        "//vendor/github.com/google/gofuzz",
++        "//vendor/github.com/stretchr/testify/assert",
++        "//vendor/github.com/stretchr/testify/require",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/cmd/ui/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,19 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "ui",
++    srcs = [
++        "doc.go",
++        "tty.go",
++        "ui.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/cmd/ui",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":ui",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/cmd/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,35 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "cmd",
++    srcs = [
++        "doc.go",
++        "fmt.go",
++        "template.go",
++        "version.go",
++        "website.go",
++        "ytt.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/cmd",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/cmd/template",
++        "//pkg/cmd/ui",
++        "//pkg/experiments",
++        "//pkg/files",
++        "//pkg/version",
++        "//pkg/website",
++        "//pkg/yamlfmt",
++        "//pkg/yamlmeta",
++        "//pkg/yttlibraryext",
++        "//vendor/github.com/cppforlife/cobrautil",
++        "//vendor/github.com/spf13/cobra",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":cmd",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/experiments/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,25 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "experiments",
++    srcs = [
++        "doc.go",
++        "flags.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/experiments",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":experiments",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "experiments_test",
++    srcs = ["flags_test.go"],
++    embed = [":experiments"],
++    deps = ["//vendor/github.com/stretchr/testify/assert"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/filepos/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,18 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "filepos",
++    srcs = [
++        "doc.go",
++        "position.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/filepos",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":filepos",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/files/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,33 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "files",
++    srcs = [
++        "doc.go",
++        "file.go",
++        "output_directory.go",
++        "output_file.go",
++        "sources.go",
++        "stdin.go",
++        "symlink.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/files",
++    visibility = ["//visibility:public"],
++    deps = ["//pkg/cmd/ui"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":files",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "files_test",
++    srcs = ["sources_test.go"],
++    deps = [
++        ":files",
++        "//vendor/github.com/stretchr/testify/require",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/orderedmap/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,19 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "orderedmap",
++    srcs = [
++        "convert.go",
++        "doc.go",
++        "map.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/orderedmap",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":orderedmap",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/schema/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,34 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "schema",
++    srcs = [
++        "annotations.go",
++        "assign.go",
++        "check.go",
++        "doc.go",
++        "error.go",
++        "openapi.go",
++        "schema.go",
++        "type.go",
++        "yamlmeta.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/schema",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/spell",
++        "//pkg/template",
++        "//pkg/template/core",
++        "//pkg/validations",
++        "//pkg/yamlmeta",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":schema",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/spell/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,18 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "spell",
++    srcs = [
++        "doc.go",
++        "spell.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/spell",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":spell",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/template/core/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,27 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "core",
++    srcs = [
++        "args.go",
++        "doc.go",
++        "errs.go",
++        "go_value.go",
++        "starlark_noop.go",
++        "starlark_struct.go",
++        "starlark_value.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/template/core",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/orderedmap",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":core",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/template/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,48 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "template",
++    srcs = [
++        "ancestors.go",
++        "annotations.go",
++        "compiled_template.go",
++        "compiled_template_error.go",
++        "compiled_template_loader.go",
++        "doc.go",
++        "evaluation_ctx.go",
++        "instructions.go",
++        "meta.go",
++        "nodes.go",
++        "program_ast.go",
++        "source.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/template",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/template/core",
++        "//vendor/github.com/k14s/starlark-go/resolve",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++        "//vendor/github.com/k14s/starlark-go/syntax",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":template",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "template_test",
++    srcs = [
++        "ancestors_test.go",
++        "compiled_template_test.go",
++        "error_hints_test.go",
++    ],
++    deps = [
++        ":template",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/texttemplate/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,36 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "texttemplate",
++    srcs = [
++        "ast.go",
++        "doc.go",
++        "evaluation_ctx.go",
++        "metas.go",
++        "parser.go",
++        "template.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/texttemplate",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/template",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":texttemplate",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "texttemplate_test",
++    srcs = ["template_test.go"],
++    deps = [
++        ":texttemplate",
++        "//pkg/template",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/validations/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,42 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "validations",
++    srcs = [
++        "annotations.go",
++        "doc.go",
++        "validate.go",
++        "yamlmeta.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/validations",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/orderedmap",
++        "//pkg/template",
++        "//pkg/template/core",
++        "//pkg/yamlmeta",
++        "//pkg/yamltemplate",
++        "//pkg/yttlibrary",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":validations",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "validations_test",
++    srcs = ["validations_test.go"],
++    deps = [
++        ":validations",
++        "//pkg/experiments",
++        "//pkg/yamlmeta",
++        "//pkg/yttlibraryext",
++        "//test/filetests",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/version/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,18 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "version",
++    srcs = [
++        "doc.go",
++        "version.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/version",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":version",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/website/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,19 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "website",
++    srcs = [
++        "doc.go",
++        "files.go",
++        "server.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/website",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":website",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/workspace/datavalues/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,27 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "datavalues",
++    srcs = [
++        "doc.go",
++        "envelope.go",
++        "schema.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/workspace/datavalues",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/schema",
++        "//pkg/template",
++        "//pkg/template/core",
++        "//pkg/workspace/ref",
++        "//pkg/yamlmeta",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":datavalues",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/workspace/ref/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,22 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "ref",
++    srcs = [
++        "doc.go",
++        "library_ref.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/workspace/ref",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/template",
++        "//pkg/template/core",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":ref",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/workspace/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,45 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "workspace",
++    srcs = [
++        "data_loader.go",
++        "data_values_pre_processing.go",
++        "data_values_schema_pre_processing.go",
++        "doc.go",
++        "doc_extractor.go",
++        "library.go",
++        "library_execution.go",
++        "library_execution_factory.go",
++        "library_module.go",
++        "overlay_post_processing.go",
++        "template_loader.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/workspace",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/cmd/ui",
++        "//pkg/filepos",
++        "//pkg/files",
++        "//pkg/schema",
++        "//pkg/template",
++        "//pkg/template/core",
++        "//pkg/texttemplate",
++        "//pkg/validations",
++        "//pkg/workspace/datavalues",
++        "//pkg/workspace/ref",
++        "//pkg/yamlmeta",
++        "//pkg/yamltemplate",
++        "//pkg/yttlibrary",
++        "//pkg/yttlibrary/overlay",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++        "//vendor/github.com/k14s/starlark-go/starlarkstruct",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":workspace",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yamlfmt/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,30 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "yamlfmt",
++    srcs = [
++        "doc.go",
++        "printer.go",
++        "writer.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yamlfmt",
++    visibility = ["//visibility:public"],
++    deps = ["//pkg/yamlmeta"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":yamlfmt",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "yamlfmt_test",
++    srcs = ["printer_test.go"],
++    deps = [
++        ":yamlfmt",
++        "//pkg/yamlmeta",
++        "//vendor/github.com/k14s/difflib",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yamlmeta/internal/yaml.v2/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,44 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "yaml_v2",
++    srcs = [
++        "apic.go",
++        "decode.go",
++        "emitterc.go",
++        "encode.go",
++        "parserc.go",
++        "readerc.go",
++        "resolve.go",
++        "scannerc.go",
++        "sorter.go",
++        "strict_scalar_resolve.go",
++        "writerc.go",
++        "yaml.go",
++        "yamlh.go",
++        "yamlprivateh.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta/internal/yaml.v2",
++    visibility = ["//pkg/yamlmeta:__subpackages__"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":yaml_v2",
++    visibility = ["//pkg/yamlmeta:__subpackages__"],
++)
++
++go_test(
++    name = "yaml_v2_test",
++    srcs = [
++        "decode_test.go",
++        "encode_test.go",
++        "example_embedded_test.go",
++        "suite_test.go",
++    ],
++    deps = [
++        ":yaml_v2",
++        "//vendor/gopkg.in/check.v1:check_v1",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yamlmeta/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,52 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "yamlmeta",
++    srcs = [
++        "ast.go",
++        "construct.go",
++        "convert.go",
++        "deep_copy.go",
++        "doc.go",
++        "document.go",
++        "document_set.go",
++        "file_position_printer.go",
++        "map_key_overrides.go",
++        "node.go",
++        "parser.go",
++        "plain.go",
++        "printer.go",
++        "printers.go",
++        "walk.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yamlmeta",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/orderedmap",
++        "//pkg/yamlmeta/internal/yaml.v2:yaml_v2",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":yamlmeta",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "yamlmeta_test",
++    srcs = [
++        "map_key_overrides_test.go",
++        "parser_strict_test.go",
++        "parser_test.go",
++        "plain_test.go",
++    ],
++    deps = [
++        ":yamlmeta",
++        "//pkg/filepos",
++        "//pkg/orderedmap",
++        "//vendor/github.com/k14s/difflib",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yamltemplate/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,45 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "yamltemplate",
++    srcs = [
++        "doc.go",
++        "evaluation_ctx.go",
++        "go_value_with_yaml.go",
++        "map_key_overrides.go",
++        "metas.go",
++        "starlark_fragment.go",
++        "template.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yamltemplate",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/orderedmap",
++        "//pkg/template",
++        "//pkg/template/core",
++        "//pkg/texttemplate",
++        "//pkg/yamlmeta",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++        "//vendor/github.com/k14s/starlark-go/syntax",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":yamltemplate",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "yamltemplate_test",
++    srcs = ["template_test.go"],
++    deps = [
++        "//pkg/experiments",
++        "//pkg/orderedmap",
++        "//pkg/yamlmeta",
++        "//pkg/yttlibraryext",
++        "//test/filetests",
++    ],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yttlibrary/overlay/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,42 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "overlay",
++    srcs = [
++        "annotations.go",
++        "api.go",
++        "array.go",
++        "array_item_match_annotation.go",
++        "assert_annotation.go",
++        "compare.go",
++        "doc.go",
++        "document.go",
++        "document_match_annotation.go",
++        "insert_annotation.go",
++        "map.go",
++        "map_item_match_annotation.go",
++        "match_annotation_expects_kwarg.go",
++        "match_child_defaults_annotation.go",
++        "op.go",
++        "plain_merge.go",
++        "replace_annotation.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary/overlay",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/filepos",
++        "//pkg/template",
++        "//pkg/template/core",
++        "//pkg/yamlmeta",
++        "//pkg/yamltemplate",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++        "//vendor/github.com/k14s/starlark-go/starlarkstruct",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":overlay",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yttlibrary/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,45 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "yttlibrary",
++    srcs = [
++        "all.go",
++        "assert.go",
++        "base64.go",
++        "data.go",
++        "doc.go",
++        "ip.go",
++        "json.go",
++        "math.go",
++        "md5.go",
++        "module.go",
++        "regexp.go",
++        "sha256.go",
++        "struct.go",
++        "template.go",
++        "url.go",
++        "version.go",
++        "yaml.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibrary",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/cmd/ui",
++        "//pkg/orderedmap",
++        "//pkg/template/core",
++        "//pkg/version",
++        "//pkg/yamlmeta",
++        "//pkg/yttlibrary/overlay",
++        "//vendor/github.com/hashicorp/go-version",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++        "//vendor/github.com/k14s/starlark-go/starlarkstruct",
++        "//vendor/github.com/k14s/starlark-go/syntax",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":yttlibrary",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yttlibraryext/toml/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,27 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "toml",
++    srcs = [
++        "doc.go",
++        "toml.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibraryext/toml",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/orderedmap",
++        "//pkg/template/core",
++        "//pkg/yamlmeta",
++        "//pkg/yttlibrary",
++        "//vendor/github.com/BurntSushi/toml",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++        "//vendor/github.com/k14s/starlark-go/starlarkstruct",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":toml",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/yttlibraryext/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,19 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "yttlibraryext",
++    srcs = [
++        "all.go",
++        "doc.go",
++    ],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg/yttlibraryext",
++    visibility = ["//visibility:public"],
++    deps = ["//pkg/yttlibraryext/toml"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":yttlibraryext",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ pkg/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,15 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "pkg",
++    srcs = ["doc.go"],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/pkg",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":pkg",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ test/e2e/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,8 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_test")
++
++go_test(
++    name = "e2e_test",
++    srcs = ["e2e_test.go"],
++    deps = ["//vendor/github.com/stretchr/testify/require"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ test/filetests/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,30 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library", "go_test")
++
++go_library(
++    name = "filetests",
++    srcs = ["filetests.go"],
++    importpath = "github.com/vmware-tanzu/carvel-ytt/test/filetests",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//pkg/template",
++        "//pkg/version",
++        "//pkg/yamlmeta",
++        "//pkg/yamltemplate",
++        "//pkg/yttlibrary",
++        "//vendor/github.com/k14s/starlark-go/starlark",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":filetests",
++    visibility = ["//visibility:public"],
++)
++
++go_test(
++    name = "filetests_test",
++    srcs = ["filetests_test.go"],
++    embed = [":filetests"],
++    deps = ["//vendor/github.com/stretchr/testify/assert"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/BurntSushi/toml/internal/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "internal",
++    srcs = ["tz.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/BurntSushi/toml/internal",
++    importpath = "github.com/BurntSushi/toml/internal",
++    visibility = ["//vendor/github.com/BurntSushi/toml:__subpackages__"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":internal",
++    visibility = ["//vendor/github.com/BurntSushi/toml:__subpackages__"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/BurntSushi/toml/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,29 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "toml",
++    srcs = [
++        "decode.go",
++        "decode_go116.go",
++        "deprecated.go",
++        "doc.go",
++        "encode.go",
++        "error.go",
++        "lex.go",
++        "meta.go",
++        "parse.go",
++        "type_fields.go",
++        "type_toml.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/BurntSushi/toml",
++    importpath = "github.com/BurntSushi/toml",
++    visibility = ["//visibility:public"],
++    deps = ["//vendor/github.com/BurntSushi/toml/internal"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":toml",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/aws/aws-lambda-go/events/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,59 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "events",
++    srcs = [
++        "activemq.go",
++        "alb.go",
++        "apigw.go",
++        "appsync.go",
++        "attributevalue.go",
++        "autoscaling.go",
++        "chime_bot.go",
++        "clientvpn.go",
++        "cloudwatch_events.go",
++        "cloudwatch_logs.go",
++        "code_commit.go",
++        "codebuild.go",
++        "codedeploy.go",
++        "codepipeline.go",
++        "codepipeline_cloudwatch.go",
++        "codepipeline_job.go",
++        "cognito.go",
++        "config.go",
++        "connect.go",
++        "duration.go",
++        "dynamodb.go",
++        "ecr_scan.go",
++        "epoch_time.go",
++        "firehose.go",
++        "iam.go",
++        "iot.go",
++        "iot_1_click.go",
++        "iot_button.go",
++        "iot_deprecated.go",
++        "kafka.go",
++        "kinesis.go",
++        "kinesis_analytics.go",
++        "lambda_function_urls.go",
++        "lex.go",
++        "rabbitmq.go",
++        "s3.go",
++        "s3_batch_job.go",
++        "ses.go",
++        "sns.go",
++        "sqs.go",
++        "streams.go",
++        "time_window.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/aws/aws-lambda-go/events",
++    importpath = "github.com/aws/aws-lambda-go/events",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":events",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/aws/aws-lambda-go/lambda/handlertrace/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "handlertrace",
++    srcs = ["trace.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/aws/aws-lambda-go/lambda/handlertrace",
++    importpath = "github.com/aws/aws-lambda-go/lambda/handlertrace",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":handlertrace",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/aws/aws-lambda-go/lambda/messages/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "messages",
++    srcs = ["messages.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/aws/aws-lambda-go/lambda/messages",
++    importpath = "github.com/aws/aws-lambda-go/lambda/messages",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":messages",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/aws/aws-lambda-go/lambda/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,31 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "lambda",
++    srcs = [
++        "entry.go",
++        "errors.go",
++        "extensions_api_client.go",
++        "handler.go",
++        "invoke_loop.go",
++        "panic.go",
++        "rpc_function.go",
++        "runtime_api_client.go",
++        "sigterm.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/aws/aws-lambda-go/lambda",
++    importpath = "github.com/aws/aws-lambda-go/lambda",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//vendor/github.com/aws/aws-lambda-go/lambda/handlertrace",
++        "//vendor/github.com/aws/aws-lambda-go/lambda/messages",
++        "//vendor/github.com/aws/aws-lambda-go/lambdacontext",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":lambda",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/aws/aws-lambda-go/lambdacontext/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "lambdacontext",
++    srcs = ["context.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/aws/aws-lambda-go/lambdacontext",
++    importpath = "github.com/aws/aws-lambda-go/lambdacontext",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":lambdacontext",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/cppforlife/cobrautil/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,25 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "cobrautil",
++    srcs = [
++        "flag_help_sections.go",
++        "help_sections.go",
++        "misc.go",
++        "resolvable_flags.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/cppforlife/cobrautil",
++    importpath = "github.com/cppforlife/cobrautil",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//vendor/github.com/spf13/cobra",
++        "//vendor/github.com/spf13/pflag",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":cobrautil",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/cppforlife/go-cli-ui/errors/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,20 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "errors",
++    srcs = [
++        "error_piece.go",
++        "multi_line_error.go",
++        "semi_structured_error.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/cppforlife/go-cli-ui/errors",
++    importpath = "github.com/cppforlife/go-cli-ui/errors",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":errors",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/davecgh/go-spew/spew/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,25 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "spew",
++    srcs = [
++        "bypass.go",
++        "bypasssafe.go",
++        "common.go",
++        "config.go",
++        "doc.go",
++        "dump.go",
++        "format.go",
++        "spew.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/davecgh/go-spew/spew",
++    importpath = "github.com/davecgh/go-spew/spew",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":spew",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/google/gofuzz/bytesource/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "bytesource",
++    srcs = ["bytesource.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/google/gofuzz/bytesource",
++    importpath = "github.com/google/gofuzz/bytesource",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":bytesource",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/google/gofuzz/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,20 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "gofuzz",
++    srcs = [
++        "doc.go",
++        "fuzz.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/google/gofuzz",
++    importpath = "github.com/google/gofuzz",
++    visibility = ["//visibility:public"],
++    deps = ["//vendor/github.com/google/gofuzz/bytesource"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":gofuzz",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/hashicorp/go-version/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,20 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "go-version",
++    srcs = [
++        "constraint.go",
++        "version.go",
++        "version_collection.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/hashicorp/go-version",
++    importpath = "github.com/hashicorp/go-version",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":go-version",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/inconshreveable/mousetrap/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,20 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "mousetrap",
++    srcs = [
++        "trap_others.go",
++        "trap_windows.go",
++        "trap_windows_1.4.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/inconshreveable/mousetrap",
++    importpath = "github.com/inconshreveable/mousetrap",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":mousetrap",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/k14s/difflib/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "difflib",
++    srcs = ["difflib.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/k14s/difflib",
++    importpath = "github.com/k14s/difflib",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":difflib",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/k14s/starlark-go/internal/compile/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,23 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "compile",
++    srcs = [
++        "compile.go",
++        "serial.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/k14s/starlark-go/internal/compile",
++    importpath = "github.com/k14s/starlark-go/internal/compile",
++    visibility = ["//vendor/github.com/k14s/starlark-go:__subpackages__"],
++    deps = [
++        "//vendor/github.com/k14s/starlark-go/resolve",
++        "//vendor/github.com/k14s/starlark-go/syntax",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":compile",
++    visibility = ["//vendor/github.com/k14s/starlark-go:__subpackages__"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/k14s/starlark-go/internal/spell/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "spell",
++    srcs = ["spell.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/k14s/starlark-go/internal/spell",
++    importpath = "github.com/k14s/starlark-go/internal/spell",
++    visibility = ["//vendor/github.com/k14s/starlark-go:__subpackages__"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":spell",
++    visibility = ["//vendor/github.com/k14s/starlark-go:__subpackages__"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/k14s/starlark-go/resolve/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,23 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "resolve",
++    srcs = [
++        "binding.go",
++        "resolve.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/k14s/starlark-go/resolve",
++    importpath = "github.com/k14s/starlark-go/resolve",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//vendor/github.com/k14s/starlark-go/internal/spell",
++        "//vendor/github.com/k14s/starlark-go/syntax",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":resolve",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/k14s/starlark-go/starlark/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,33 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "starlark",
++    srcs = [
++        "debug.go",
++        "empty.s",
++        "eval.go",
++        "hashtable.go",
++        "int.go",
++        "interp.go",
++        "library.go",
++        "profile.go",
++        "unpack.go",
++        "value.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/k14s/starlark-go/starlark",
++    importpath = "github.com/k14s/starlark-go/starlark",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//vendor/github.com/k14s/starlark-go/internal/compile",
++        "//vendor/github.com/k14s/starlark-go/internal/spell",
++        "//vendor/github.com/k14s/starlark-go/resolve",
++        "//vendor/github.com/k14s/starlark-go/syntax",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":starlark",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/k14s/starlark-go/starlarkstruct/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,23 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "starlarkstruct",
++    srcs = [
++        "module.go",
++        "struct.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/k14s/starlark-go/starlarkstruct",
++    importpath = "github.com/k14s/starlark-go/starlarkstruct",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//vendor/github.com/k14s/starlark-go/starlark",
++        "//vendor/github.com/k14s/starlark-go/syntax",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":starlarkstruct",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/k14s/starlark-go/syntax/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,23 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "syntax",
++    srcs = [
++        "block_scanner.go",
++        "parse.go",
++        "quote.go",
++        "scan.go",
++        "syntax.go",
++        "walk.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/k14s/starlark-go/syntax",
++    importpath = "github.com/k14s/starlark-go/syntax",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":syntax",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/kr/pretty/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,22 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "pretty",
++    srcs = [
++        "diff.go",
++        "formatter.go",
++        "pretty.go",
++        "zero.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/kr/pretty",
++    importpath = "github.com/kr/pretty",
++    visibility = ["//visibility:public"],
++    deps = ["//vendor/github.com/kr/text"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":pretty",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/kr/text/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,20 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "text",
++    srcs = [
++        "doc.go",
++        "indent.go",
++        "wrap.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/kr/text",
++    importpath = "github.com/kr/text",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":text",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/pmezard/go-difflib/difflib/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,16 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "difflib",
++    srcs = ["difflib.go"],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/pmezard/go-difflib/difflib",
++    importpath = "github.com/pmezard/go-difflib/difflib",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":difflib",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/spf13/cobra/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,39 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "cobra",
++    srcs = [
++        "active_help.go",
++        "args.go",
++        "bash_completions.go",
++        "bash_completionsV2.go",
++        "cobra.go",
++        "command.go",
++        "command_notwin.go",
++        "command_win.go",
++        "completions.go",
++        "fish_completions.go",
++        "flag_groups.go",
++        "powershell_completions.go",
++        "shell_completions.go",
++        "zsh_completions.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/spf13/cobra",
++    importpath = "github.com/spf13/cobra",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//vendor/github.com/spf13/pflag",
++    ] + select({
++        "@io_bazel_rules_go//go/platform:windows": [
++            "//vendor/github.com/inconshreveable/mousetrap",
++        ],
++        "//conditions:default": [],
++    }),
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":cobra",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/spf13/pflag/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,53 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "pflag",
++    srcs = [
++        "bool.go",
++        "bool_slice.go",
++        "bytes.go",
++        "count.go",
++        "duration.go",
++        "duration_slice.go",
++        "flag.go",
++        "float32.go",
++        "float32_slice.go",
++        "float64.go",
++        "float64_slice.go",
++        "golangflag.go",
++        "int.go",
++        "int16.go",
++        "int32.go",
++        "int32_slice.go",
++        "int64.go",
++        "int64_slice.go",
++        "int8.go",
++        "int_slice.go",
++        "ip.go",
++        "ip_slice.go",
++        "ipmask.go",
++        "ipnet.go",
++        "string.go",
++        "string_array.go",
++        "string_slice.go",
++        "string_to_int.go",
++        "string_to_int64.go",
++        "string_to_string.go",
++        "uint.go",
++        "uint16.go",
++        "uint32.go",
++        "uint64.go",
++        "uint8.go",
++        "uint_slice.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/spf13/pflag",
++    importpath = "github.com/spf13/pflag",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":pflag",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/stretchr/testify/assert/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,33 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "assert",
++    srcs = [
++        "assertion_compare.go",
++        "assertion_compare_can_convert.go",
++        "assertion_compare_legacy.go",
++        "assertion_format.go",
++        "assertion_forward.go",
++        "assertion_order.go",
++        "assertions.go",
++        "doc.go",
++        "errors.go",
++        "forward_assertions.go",
++        "http_assertions.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/stretchr/testify/assert",
++    importpath = "github.com/stretchr/testify/assert",
++    visibility = ["//visibility:public"],
++    deps = [
++        "//vendor/github.com/davecgh/go-spew/spew",
++        "//vendor/github.com/pmezard/go-difflib/difflib",
++        "//vendor/gopkg.in/yaml.v3:yaml_v3",
++    ],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":assert",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/github.com/stretchr/testify/require/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,23 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "require",
++    srcs = [
++        "doc.go",
++        "forward_requirements.go",
++        "require.go",
++        "require_forward.go",
++        "requirements.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/github.com/stretchr/testify/require",
++    importpath = "github.com/stretchr/testify/require",
++    visibility = ["//visibility:public"],
++    deps = ["//vendor/github.com/stretchr/testify/assert"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":require",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/gopkg.in/check.v1/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,25 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "check_v1",
++    srcs = [
++        "benchmark.go",
++        "check.go",
++        "checkers.go",
++        "helpers.go",
++        "printer.go",
++        "reporter.go",
++        "run.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/gopkg.in/check.v1",
++    importpath = "gopkg.in/check.v1",
++    visibility = ["//visibility:public"],
++    deps = ["//vendor/github.com/kr/pretty"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":check_v1",
++    visibility = ["//visibility:public"],
++)
++
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ vendor/gopkg.in/yaml.v3/BUILD.bazel	1970-01-01 00:00:00.000000000 +0000
+@@ -0,0 +1,30 @@
++load("@io_bazel_rules_go//go:def.bzl", "go_library")
++
++go_library(
++    name = "yaml_v3",
++    srcs = [
++        "apic.go",
++        "decode.go",
++        "emitterc.go",
++        "encode.go",
++        "parserc.go",
++        "readerc.go",
++        "resolve.go",
++        "scannerc.go",
++        "sorter.go",
++        "writerc.go",
++        "yaml.go",
++        "yamlh.go",
++        "yamlprivateh.go",
++    ],
++    importmap = "github.com/vmware-tanzu/carvel-ytt/vendor/gopkg.in/yaml.v3",
++    importpath = "gopkg.in/yaml.v3",
++    visibility = ["//visibility:public"],
++)
++
++alias(
++    name = "go_default_library",
++    actual = ":yaml_v3",
++    visibility = ["//visibility:public"],
++)
++

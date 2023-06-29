@@ -1,0 +1,32 @@
+load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+
+genrule(
+    name = "main_go",
+    outs = ["main.go"],
+    cmd = """
+    cat << EOF >> $@
+package main
+
+import "fmt"
+
+func main() {
+  fmt.Printf("Hello World!")
+}
+EOF
+""",
+)
+
+go_image(
+    name = "image",
+    srcs = ["main.go"],
+    goos = "linux",
+    goarch= "amd64",
+    importpath = "github.com/ebay/rules_ytt",
+    visibility = ["//tests:__pkg__"],
+)
+
+exports_files([
+  "base.yaml",
+  "defaults.yaml",
+  "values.yaml",
+])

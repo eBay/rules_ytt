@@ -1,0 +1,23 @@
+load("//internal:rules.bzl", "ytt")
+
+ytt(
+    name = "manifests",
+    srcs = [
+      "//tests/testdata:base.yaml",
+      "//tests/testdata:defaults.yaml",
+      "//tests/testdata:values.yaml",
+    ],
+    image = "//tests/testdata:image.digest",
+)
+
+sh_library(
+  name = "ytt_lib",
+  data = [":manifests"],
+)
+
+sh_test(
+    name = "ytt_test",
+    srcs = [":validator.sh"],
+    args = ["$(location :ytt_lib)"],
+    data = [":ytt_lib"],
+)

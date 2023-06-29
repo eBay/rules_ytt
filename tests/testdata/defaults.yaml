@@ -1,0 +1,4 @@
+#@data/values-schema
+---
+name: "default_name"
+image_digest: ""
