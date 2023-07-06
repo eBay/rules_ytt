@@ -9,6 +9,7 @@ load("@bazel_tools//tools/build_defs/repo:http.bzl", "http_archive")
 http_archive(
     name = "com_github_ebay_rules_ytt",
     sha256 = "effe98795742e322d96842e6c92e3d6bbde3b457e0c9e3a18a4d693d103ab23d",
+    strip_prefix = "rules_ytt-0.1.0",
     urls = [
         "https://github.com/eBay/rules_ytt/releases/download/v0.1.0/rules_ytt-0.1.0.zip",
     ],

@@ -49,3 +49,13 @@ def ytt_rules_dependencies(workspace_name = "com_github_ebay_rules_ytt"):
             "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.29.0/bazel-gazelle-v0.29.0.tar.gz",
         ],
     )
+
+  if "io_bazel_stardoc" not in native.existing_rules().keys():
+    http_archive(
+        name = "io_bazel_stardoc",
+        sha256 = "3fd8fec4ddec3c670bd810904e2e33170bedfe12f90adf943508184be458c8bb",
+        urls = [
+            "https://mirror.bazel.build/github.com/bazelbuild/stardoc/releases/download/0.5.3/stardoc-0.5.3.tar.gz",
+            "https://github.com/bazelbuild/stardoc/releases/download/0.5.3/stardoc-0.5.3.tar.gz",
+        ],
+    )
