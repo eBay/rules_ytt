@@ -14,9 +14,9 @@ def ytt_rules_dependencies(workspace_name = "com_github_ebay_rules_ytt"):
   if "com_github_vmware_tanzu_carvel_ytt" not in native.existing_rules().keys():
     http_archive(
         name = "com_github_vmware_tanzu_carvel_ytt",
-        sha256 = "27cce7c58bbd761808fb2eb17cf402e062d33b337749499279b07504383b4080",
-        strip_prefix = "ytt-0.45.0",
-        urls = ["https://github.com/vmware-tanzu/carvel-ytt/archive/v0.45.0.zip"],
+        sha256 = "13c70be7f2631bf313c6269206b738f6a9976f2f8b9c480624a70d75a495f4f8",
+        strip_prefix = "ytt-0.46.0",
+        urls = ["https://github.com/vmware-tanzu/carvel-ytt/archive/v0.46.0.zip"],
         patches = [
             "@%s//buildpatches:delete_print" % workspace_name,
             "@%s//buildpatches:build_files" % workspace_name,
@@ -24,30 +24,12 @@ def ytt_rules_dependencies(workspace_name = "com_github_ebay_rules_ytt"):
         patch_args = ["-s", "-p0"],
     )
 
-  if "bazel_skylib" not in native.existing_rules().keys():
+  if "rules_oci" not in native.existing_rules().keys():
     http_archive(
-        name = "bazel_skylib",
-        sha256 = "b8a1527901774180afc798aeb28c4634bdccf19c4d98e7bdd1ce79d1fe9aaad7",
-        urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/bazel-skylib/releases/download/1.4.1/bazel-skylib-1.4.1.tar.gz",
-            "https://github.com/bazelbuild/bazel-skylib/releases/download/1.4.1/bazel-skylib-1.4.1.tar.gz",
-        ],
-    )
-
-  if "io_bazel_rules_docker" not in native.existing_rules().keys():
-    http_archive(
-        name = "io_bazel_rules_docker",
-        sha256 = "b1e80761a8a8243d03ebca8845e9cc1ba6c82ce7c5179ce2b295cd36f7e394bf",
-        urls = ["https://github.com/bazelbuild/rules_docker/releases/download/v0.25.0/rules_docker-v0.25.0.tar.gz"],
-    )
-
-    http_archive(
-        name = "bazel_gazelle",
-        sha256 = "ecba0f04f96b4960a5b250c8e8eeec42281035970aa8852dda73098274d14a1d",
-        urls = [
-            "https://mirror.bazel.build/github.com/bazelbuild/bazel-gazelle/releases/download/v0.29.0/bazel-gazelle-v0.29.0.tar.gz",
-            "https://github.com/bazelbuild/bazel-gazelle/releases/download/v0.29.0/bazel-gazelle-v0.29.0.tar.gz",
-        ],
+        name = "rules_oci",
+        sha256 = "21a7d14f6ddfcb8ca7c5fc9ffa667c937ce4622c7d2b3e17aea1ffbc90c96bed",
+        strip_prefix = "rules_oci-1.4.0",
+        url = "https://github.com/bazel-contrib/rules_oci/releases/download/v1.4.0/rules_oci-v1.4.0.tar.gz",
     )
 
   if "io_bazel_stardoc" not in native.existing_rules().keys():
@@ -59,3 +41,14 @@ def ytt_rules_dependencies(workspace_name = "com_github_ebay_rules_ytt"):
             "https://github.com/bazelbuild/stardoc/releases/download/0.5.3/stardoc-0.5.3.tar.gz",
         ],
     )
+
+  if "aspect_bazel_lib" not in native.existing_rules().keys():
+    http_archive(
+        name = "aspect_bazel_lib",
+        sha256 = "a185ccff9c1b8589c63f66d7eb908de15c5d6bb05562be5f46336c53e7a7326a",
+        strip_prefix = "bazel-lib-2.0.0-rc1",
+        url = "https://github.com/aspect-build/bazel-lib/releases/download/v2.0.0-rc1/bazel-lib-v2.0.0-rc1.tar.gz",
+    )
+
+def ytt_register_toolchains():
+  return native.register_toolchains( ":toolchain")

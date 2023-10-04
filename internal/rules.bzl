@@ -29,7 +29,7 @@ def _impl(ctx):
       "--dangerous-allow-all-symlink-destinations",
       "--output-files", tree.path,
     ],
-    executable = ctx.executable._ytt,
+    executable = ctx.toolchains["//:toolchain_type"].info.ytt,
     tools = runtools,
   )
 
@@ -69,13 +69,8 @@ ytt = rule(
       allow_single_file = True,
       doc = "Target that generates a Docker image. Used for extracting image digest.",
     ),
-    "_ytt": attr.label(
-      executable = True,
-      cfg = "host",
-      allow_files = True,
-      doc = "Link to ytt binary.",
-      default = Label("@com_github_vmware_tanzu_carvel_ytt//cmd/ytt"),
-    ),
   },
+  toolchains = ["//:toolchain_type"],
   executable = True,
 )
+

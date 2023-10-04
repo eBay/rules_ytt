@@ -1,4 +1,6 @@
-load("@io_bazel_rules_docker//go:image.bzl", "go_image")
+load("@aspect_bazel_lib//lib:tar.bzl", "tar", "mtree_spec")
+load("@io_bazel_rules_go//go:def.bzl", "go_binary", "go_library")
+load("@rules_oci//oci:defs.bzl", "oci_image")
 
 genrule(
     name = "main_go",
@@ -16,13 +18,34 @@ EOF
 """,
 )
 
-go_image(
-    name = "image",
+go_library(
+    name = "hello-world_lib",
     srcs = ["main.go"],
-    goos = "linux",
-    goarch= "amd64",
     importpath = "github.com/ebay/rules_ytt",
-    visibility = ["//tests:__pkg__"],
+    visibility = ["//visibility:private"],
+)
+
+go_binary(
+    name = "hello-world",
+    embed = [":hello-world_lib"],
+    visibility = ["//visibility:public"],
+)
+
+tar(
+  name = "tar",
+  srcs = [":hello-world"],
+)
+
+# ERROR: .../rules_ytt/tests/BUILD.bazel:3:4: in ytt rule
+# //tests:manifests: target '//tests/testdata:image.digest' is not
+# visible from target '//tests:manifests'
+package(default_visibility = ["//visibility:public"])
+
+oci_image(
+    name = "image",
+    base = "@distroless_base",
+    entrypoint = ["/tests/testdata/hello-world_/hello-world"],
+    tars = [":tar"],
 )
 
 exports_files([

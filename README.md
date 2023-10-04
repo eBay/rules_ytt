@@ -15,9 +15,14 @@ http_archive(
     ],
 )
 
-load("@com_github_ebay_rules_ytt//:deps.bzl", "ytt_rules_dependencies")
+load("@com_github_ebay_rules_ytt//:deps.bzl",
+    "ytt_rules_dependencies",
+    "ytt_register_toolchains",
+)
 
 ytt_rules_dependencies()
+
+ytt_register_toolchains()
 ```
 
 ## Usage
@@ -26,6 +31,9 @@ Add to `BUILD` file:
 
 ```starlark
 load("@com_github_ebay_rules_ytt//:def.bzl", "ytt")
+
+# Build an image with rules_docker
+
 load("@io_bazel_rules_docker//go:image.bzl", "go_image")
 
 go_image(
@@ -33,6 +41,17 @@ go_image(
     srcs = ["main.go"],
     importpath = "...",
 )
+
+# or with rules_oci
+
+load("@rules_oci//oci:defs.bzl", "oci_image")
+
+oci_image(
+    name = "image",
+    ...
+)
+
+# Generate YAML manifests
 
 ytt(
     name = "manifests",

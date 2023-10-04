@@ -1,0 +1,18 @@
+load("//internal:toolchains.bzl", "ytt_toolchain")
+
+toolchain_type(
+    name = "toolchain_type",
+    visibility = ["//visibility:public"],
+)
+
+ytt_toolchain(
+    name = "toolchain_impl",
+    ytt = "@com_github_vmware_tanzu_carvel_ytt//cmd/ytt",
+    visibility = ["//visibility:public"],
+)
+
+toolchain(
+    name = "toolchain",
+    toolchain = ":toolchain_impl",
+    toolchain_type = ":toolchain_type",
+)
