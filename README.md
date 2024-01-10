@@ -1,3 +1,5 @@
+# THIS REPO IS NOT MAINTAINED. PLEASE USE [FORK](https://github.com/ekhabarov/rules_ytt) INSTEAD
+
 # Carvel ytt rules for Bazel
 
 ## Setup
